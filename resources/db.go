@@ -1,4 +1,4 @@
-package resources
+package re
 
 import (
 	"github.com/gocql/gocql"
