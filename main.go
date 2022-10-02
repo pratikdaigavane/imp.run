@@ -1,12 +1,12 @@
-package emoji_hash
+package main
 
 import (
-	"crypto/sha256"
-	"fmt"
+	"github.com/pratikdaigavane/emoji-hash/resources"
 )
 
-func GenerateEmojiHash(data string) [32]byte {
-	sum := sha256.Sum256([]byte(data))
-	fmt.Printf("%x\n", sum)
-	return sum
+func main() {
+	resources.Connect()
+	//err := resources.Err
+	//session := resources.Session
+	defer resources.Close()
 }
