@@ -1,18 +1,27 @@
 package models
 
-import "github.com/scylladb/gocqlx/v2/table"
+import (
+	"github.com/scylladb/gocqlx/v2/table"
+	"time"
+)
 
-var urlsMetadata = table.Metadata{
-	Name:    "urls",
-	Columns: []string{"short_code", "url", "created_at"},
-	PartKey: []string{"short_code"},
-	SortKey: []string{"created_at"},
-}
-
-var UrlsTable = table.New(urlsMetadata)
+var (
+	UrlsTable = table.New(table.Metadata{
+		Name: "urls",
+		Columns: []string{
+			"created_at",
+			"short_code",
+			"url",
+		},
+		PartKey: []string{
+			"short_code",
+		},
+		SortKey: []string{},
+	})
+)
 
 type URL struct {
-	ShortCode string
-	Url       string
-	CreatedAt string
+	Url       string    `db:"url" json:"url"`
+	ShortCode string    `db:"short_code" json:"short-code"`
+	CreatedAt time.Time `db:"created_at"`
 }
