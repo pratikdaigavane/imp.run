@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/pratikdaigavane/emoji-hash/models"
 	re "github.com/pratikdaigavane/emoji-hash/resources"
 	"log"
 	"net/http"
@@ -18,12 +19,15 @@ func insertUrl(c *gin.Context) {
 		return
 	}
 
-	err := re.Session.Query(`INSERT INTO url_shortener.urls (short_code, created_at, url) VALUES (?, toUnixTimestamp(now()), ?)`,
-		req.ShortCode, req.Url).Exec()
+	dbObj := models.URL{
+		req.ShortCode,
+		req.Url,
+		"",
+	}
 
-	if err != nil {
+	q := re.Session.Query(models.UrlsTable.Insert()).BindStruct(dbObj)
+	if err := q.ExecRelease(); err != nil {
 		log.Println(err)
-		return
 	}
 
 	c.IndentedJSON(http.StatusCreated, req)
@@ -31,10 +35,14 @@ func insertUrl(c *gin.Context) {
 
 func getUrl(c *gin.Context) {
 	shortCode := c.Param("sc")
-	var url string
-	sleepTimeOutput := re.Session.Query("SELECT url FROM url_shortener.urls WHERE short_code = ? LIMIT 1", shortCode).Iter()
-	sleepTimeOutput.Scan(&url)
-	c.Redirect(http.StatusPermanentRedirect, url)
+	dbObj := models.URL{
+		ShortCode: shortCode,
+	}
+	q := re.Session.Query(models.UrlsTable.Get()).BindStruct(dbObj)
+	if err := q.GetRelease(&dbObj); err != nil {
+		log.Println(err)
+	}
+	c.Redirect(http.StatusMovedPermanently, dbObj.Url)
 }
 
 func main() {
@@ -43,7 +51,7 @@ func main() {
 	defer re.Close()
 	router.GET("/:sc", getUrl)
 	router.POST("/insert", insertUrl)
-	err := router.Run(":8080")
+	err := router.Run(":8081")
 	if err != nil {
 		return
 	}
