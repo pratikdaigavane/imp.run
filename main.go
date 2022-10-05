@@ -6,31 +6,34 @@ import (
 	re "github.com/pratikdaigavane/emoji-hash/resources"
 	"log"
 	"net/http"
+	"time"
 )
 
-type URLReq struct {
-	Url       string `cql:"url" json:"url"`
-	ShortCode string `cql:"short_code" json:"short-code"`
-}
-
 func insertUrl(c *gin.Context) {
-	var req URLReq
+	req := models.URL{
+		CreatedAt: time.Now(),
+	}
 	if err := c.BindJSON(&req); err != nil {
 		return
 	}
 
-	dbObj := models.URL{
-		req.ShortCode,
-		req.Url,
-		"",
-	}
+	q := models.UrlsTable.InsertBuilder().Unique().Query(re.Session).BindStruct(req)
 
-	q := re.Session.Query(models.UrlsTable.Insert()).BindStruct(dbObj)
-	if err := q.ExecRelease(); err != nil {
+	applied, err := q.ExecCASRelease()
+
+	if err != nil {
 		log.Println(err)
+		c.Status(http.StatusInternalServerError)
+		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, req)
+	if !applied {
+		log.Println("Short Code Already Present")
+		c.Status(http.StatusConflict)
+		return
+	}
+
+	c.JSON(http.StatusCreated, req)
 }
 
 func getUrl(c *gin.Context) {
@@ -42,6 +45,12 @@ func getUrl(c *gin.Context) {
 	if err := q.GetRelease(&dbObj); err != nil {
 		log.Println(err)
 	}
+
+	if len(dbObj.Url) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
 	c.Redirect(http.StatusMovedPermanently, dbObj.Url)
 }
 
