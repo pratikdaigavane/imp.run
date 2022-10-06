@@ -67,7 +67,7 @@ func main() {
 	router.GET("/:sc", getUrl)
 	router.POST("/insert", insertUrl)
 	router.Use(cors.New(config))
-	err := router.Run(":8081")
+	err := router.Run(":8080")
 	if err != nil {
 		return
 	}
