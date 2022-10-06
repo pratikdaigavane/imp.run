@@ -61,6 +61,9 @@ func main() {
 	router := gin.Default()
 	re.Connect()
 	defer re.Close()
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "https://app.imp.run")
+	})
 	router.GET("/:sc", getUrl)
 	router.POST("/insert", insertUrl)
 	router.Use(cors.New(config))
