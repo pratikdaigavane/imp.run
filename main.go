@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pratikdaigavane/emoji-hash/models"
 	re "github.com/pratikdaigavane/emoji-hash/resources"
@@ -55,11 +56,14 @@ func getUrl(c *gin.Context) {
 }
 
 func main() {
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"https://app.imp.run"}
 	router := gin.Default()
 	re.Connect()
 	defer re.Close()
 	router.GET("/:sc", getUrl)
 	router.POST("/insert", insertUrl)
+	router.Use(cors.New(config))
 	err := router.Run(":8081")
 	if err != nil {
 		return
