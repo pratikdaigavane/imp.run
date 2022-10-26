@@ -55,18 +55,41 @@ func getUrl(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, dbObj.Url)
 }
 
+func isShortCodeAvailable(c *gin.Context) {
+	shortCode := c.Param("sc")
+	dbObj := models.URL{
+		ShortCode: shortCode,
+	}
+	q := re.Session.Query(models.UrlsTable.Get()).BindStruct(dbObj)
+	if err := q.GetRelease(&dbObj); err != nil {
+		log.Println(err)
+	}
+	if len(dbObj.Url) == 0 {
+		c.JSON(http.StatusOK, "{}")
+		return
+	}
+
+	c.JSON(http.StatusConflict, "{}")
+}
+
 func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"https://app.imp.run"}
+	config.AddAllowMethods("OPTIONS")
+
 	router := gin.Default()
+	router.Use(cors.New(config))
+
 	re.Connect()
 	defer re.Close()
+
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "https://app.imp.run")
 	})
 	router.GET("/:sc", getUrl)
+	router.GET("/is-sc-available/:sc", isShortCodeAvailable)
 	router.POST("/insert", insertUrl)
-	router.Use(cors.New(config))
+
 	err := router.Run(":8080")
 	if err != nil {
 		return
