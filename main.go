@@ -38,6 +38,7 @@ func insertUrl(c *gin.Context) {
 }
 
 func getUrl(c *gin.Context) {
+	path := c.Param("path")
 	shortCode := c.Param("sc")
 	dbObj := models.URL{
 		ShortCode: shortCode,
@@ -52,7 +53,7 @@ func getUrl(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusMovedPermanently, dbObj.Url)
+	c.Redirect(http.StatusMovedPermanently, dbObj.Url+path)
 }
 
 func isShortCodeAvailable(c *gin.Context) {
@@ -86,7 +87,7 @@ func main() {
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "https://app.imp.run")
 	})
-	router.GET("/:sc", getUrl)
+	router.GET("/:sc/*path", getUrl)
 	router.GET("/is-sc-available/:sc", isShortCodeAvailable)
 	router.POST("/insert", insertUrl)
 
